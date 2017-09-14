@@ -1,9 +1,10 @@
 package sooncode.mongodb;
-import java.util.ArrayList;  
-import java.util.List;  
-import com.mongodb.MongoClient;  
-import com.mongodb.MongoCredential;  
-import com.mongodb.ServerAddress;  
+import java.util.ArrayList;
+import java.util.List;
+
+import com.mongodb.MongoClient;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoDatabase;  
   
 public class MongoClientManager {  
@@ -37,7 +38,8 @@ public class MongoClientManager {
 	}
   
 	
-	public MongoDatabase getMongoDatabase(){  
+ 
+	public <T> T mongoDatabaseCallBack( MongoDatabaseUse<T> MongoDatabaseUse ){  
 		 MongoClient mongoClient = null ;
         try {  
             //连接到MongoDB服务 如果是远程连接可以替换“localhost”为服务器所在IP地址  
@@ -54,8 +56,11 @@ public class MongoClientManager {
             //通过连接认证获取MongoDB连接  
             mongoClient = new MongoClient(addrs,credentials);  
             MongoDatabase mongoDatabase = mongoClient.getDatabase(this.databaseName); 
-           // mongoClient.close();
-            return  mongoDatabase; 
+            T t = MongoDatabaseUse.use(mongoDatabase);
+            mongoClient.close();
+            return t;
+            
+            
              
         } catch (Exception e) {  
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
@@ -63,8 +68,11 @@ public class MongoClientManager {
             	mongoClient.close();
             }
             return null;
+             
         }  
-    }  
+    } 
+	
+	 
 	
 	 
 } 

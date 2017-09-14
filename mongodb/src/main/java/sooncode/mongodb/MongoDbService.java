@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.bson.Document;
 
+import com.mongodb.BasicDBObject;
+
 public class MongoDbService {
 
 	private MongoDbDao mongoDbDao;
@@ -28,6 +30,27 @@ public class MongoDbService {
 		List<T> list = DocumentService.getModels(modelClass, documents);
 		return list;
 
+	}
+	
+	
+	public <T> List<T> getModels(T model , int pageNumber,int pageSize) {
+		String modelName =  ModelNaming.getCollectionName(model);
+		BasicDBObject basicDBObject = new BasicDBObject();
+		RObject<T> rObj = new RObject<>(model);
+		rObj.forEach(new Traversal<String, Object>() {
+			
+			@Override
+			public void each(String key, Object value) {
+				if(value != null){
+				basicDBObject.append(key, value);
+				}
+			}
+		});
+		List<Document> documents = mongoDbDao.getDocuments(modelName,basicDBObject,pageNumber,pageSize);
+		@SuppressWarnings("unchecked")
+		List<T> list = DocumentService.getModels((Class<T>) model.getClass(), documents);
+		return list;
+		
 	}
 
 	public <T> void updateModel(String key, Object value, T model) {

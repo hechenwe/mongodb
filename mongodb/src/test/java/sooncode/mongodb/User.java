@@ -1,40 +1,71 @@
 package sooncode.mongodb;
 
+import java.util.Date;
+
 public class User {
-private Integer id;
+	private Integer id;
 
-private String username;
+	private String username;
 
-private String pwd ;
+	private String pwd;
 
-public Integer getId() {
-	return id;
-}
+	private Double score;
 
-public void setId(Integer id) {
-	this.id = id;
-}
+	private Boolean sex;
 
-public String getUsername() {
-	return username;
-}
+	private Date birthDay;
 
-public void setUsername(String username) {
-	this.username = username;
-}
+	public Integer getId() {
+		return id;
+	}
 
-public String getPwd() {
-	return pwd;
-}
+	public void setId(Integer id) {
+		this.id = id;
+	}
 
-public void setPwd(String pwd) {
-	this.pwd = pwd;
-}
+	public String getUsername() {
+		return username;
+	}
 
-@Override
-public String toString() {
-	return "User [id=" + id + ", username=" + username + ", pwd=" + pwd + "]";
-}
+	public void setUsername(String username) {
+		this.username = username;
+	}
 
+	public String getPwd() {
+		return pwd;
+	}
+
+	public void setPwd(String pwd) {
+		this.pwd = pwd;
+	}
+
+	public Double getScore() {
+		return score;
+	}
+
+	public void setScore(Double score) {
+		this.score = score;
+	}
+
+	public Boolean getSex() {
+		return sex;
+	}
+
+	public void setSex(Boolean sex) {
+		this.sex = sex;
+	}
+
+	public Date getBirthDay() {
+		return birthDay;
+	}
+
+	public void setBirthDay(Date birthDay) {
+		this.birthDay = birthDay;
+	}
+
+	@Override
+	public String toString() {
+		return "User [id=" + id + ", username=" + username + ", pwd=" + pwd + ", score=" + score + ", sex=" + sex + ", birthDay=" + birthDay + "]";
+	}
 
 }
