@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd   
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd">
+
+	<context:component-scan base-package="sooncode">
+	</context:component-scan>
+
+	<bean id="mcm"
+		class="sooncode.mongodb.MongoClientManager">
+		<property name="ip" value="127.0.0.1" />
+		<property name="port" value="27017" />
+		<property name="username" value="hechen" />
+		<property name="password" value="123456" />
+		<property name="databaseName" value="soondb" />
+	</bean>
+	<bean id="mongoDbDao" class="sooncode.mongodb.MongoDbDao"
+		abstract="false" lazy-init="false" autowire="default">
+		<property name="mongoClientManager">
+			<ref bean="mcm" />
+		</property>
+	</bean>
+	<bean id="mongoDbService" class="sooncode.mongodb.MongoDbService"
+		abstract="false" lazy-init="false" autowire="default">
+		<property name="mongoDbDao">
+			<ref bean="mongoDbDao" />
+		</property>
+	</bean>
+	 
+	 
+	<tx:annotation-driven transaction-manager="transactionManager" />
+</beans>
