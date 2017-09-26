@@ -1,4 +1,4 @@
-package sooncode.mongodb;
+package sooncode.mongodb.builder;
 /**
  * 模型 命名
  * @author hechenwe@gmail.com

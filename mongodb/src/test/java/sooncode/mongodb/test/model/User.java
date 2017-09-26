@@ -1,4 +1,4 @@
-package sooncode.mongodb;
+package sooncode.mongodb.test.model;
 
 import java.util.Date;
 

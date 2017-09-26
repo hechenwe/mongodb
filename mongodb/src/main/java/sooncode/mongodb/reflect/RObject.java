@@ -1,4 +1,4 @@
-package sooncode.mongodb;
+package sooncode.mongodb.reflect;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;

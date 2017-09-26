@@ -1,4 +1,4 @@
-package sooncode.mongodb;
+package sooncode.mongodb.db;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,9 +59,7 @@ public class MongoClientManager {
             T t = MongoDatabaseUse.use(mongoDatabase);
             mongoClient.close();
             return t;
-            
-            
-             
+           
         } catch (Exception e) {  
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
             if(mongoClient != null){

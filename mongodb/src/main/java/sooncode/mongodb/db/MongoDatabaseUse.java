@@ -1,4 +1,4 @@
-package sooncode.mongodb;
+package sooncode.mongodb.db;
 
 import com.mongodb.client.MongoDatabase;
 
