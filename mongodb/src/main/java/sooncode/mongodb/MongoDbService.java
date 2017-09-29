@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import com.mongodb.BasicDBObject;
 
@@ -22,11 +23,31 @@ public class MongoDbService {
 	}
 
 	public <T> void saveModels(List<T> models) {
-
-		T model = models.get(0);
-		String modelName = ModelNaming.getCollectionName(model);
 		List<Document> documents = DocumentBuilder.getDocuments(models);
-		mongoDbDao.saveDocuments(modelName, documents);
+	    mongoDbDao.saveDocuments(documents);
+		 
+	}
+
+	/**
+	 * 保存实体
+	 * 
+	 * @param model
+	 * @return ObjectId
+	 */
+	public <T> void saveModel(T model) {
+	 
+		Document document = DocumentBuilder.getDocument(model);
+		mongoDbDao.saveDocument(document);
+
+	}
+
+	public <T> T getModel(T model) {
+		String collectionName = ModelNaming.getCollectionName(model);
+		RObject<T> rObj = new RObject<>(model);
+		ObjectId _id =  (ObjectId) rObj.invoke( "get_id");
+		Document document = mongoDbDao.getDocument(collectionName, _id);
+		return   DocumentBuilder.getModel(model, document);
+
 	}
 
 	public <T> List<T> getModels(Class<T> modelClass) {
@@ -37,10 +58,7 @@ public class MongoDbService {
 
 	}
 
-	public <T> T getModel(T model) {
-
-		return getModels(model, 1, 1).get(0);
-	}
+	 
 
 	public <T> List<T> getModels(T model, int pageNumber, int pageSize) {
 		String modelName = ModelNaming.getCollectionName(model);
@@ -77,16 +95,24 @@ public class MongoDbService {
 
 		mongoDbDao.updateDocuments(modelName, key, value, documents);
 	}
+	
+	
+	public <T> void updateModel(T model) {
+		Document doc = DocumentBuilder.getDocument( model);
+		mongoDbDao.updateDocument(doc);
+	}
 
-	public <T> long deleteModels(Class<T> modelClass, String key, Object value) {
-		String modelName = ModelNaming.getCollectionName(modelClass);
+	public <T> long deleteModels(Class<T> model,String key , Object value) {
+		String modelName = ModelNaming.getCollectionName(model);
 		return mongoDbDao.deleteDocuments(modelName, key, value).getDeletedCount();
 
 	}
 
-	public <T> long deleteModel(Class<T> modelClass, String key, Object value) {
-		String modelName = ModelNaming.getCollectionName(modelClass);
-		return mongoDbDao.deleteDocument(modelName, key, value).getDeletedCount();
+	public <T> long deleteModel(T model) {
+		String modelName = ModelNaming.getCollectionName(model);
+		Document doc = DocumentBuilder.getDocument( model);
+		Object value = doc.get("_id");
+		return mongoDbDao.deleteDocument(modelName, "_id", value).getDeletedCount();
 	}
 
 	public <T> long getModelSize(Class<T> modelClass) {
@@ -94,6 +120,14 @@ public class MongoDbService {
 		return mongoDbDao.getDocumentSize(modelName);
 	}
 
+	/**
+	 * 内嵌模型
+	 * 
+	 * @param mainModelClass
+	 * @param key
+	 * @param val
+	 * @param otherModel
+	 */
 	public <M, O> void embedModel(Class<M> mainModelClass, String key, Object val, O otherModel) {
 		String collectionName = ModelNaming.getCollectionName(mainModelClass);
 		String otherDocumentName = ModelNaming.getCollectionName(otherModel);
@@ -102,6 +136,14 @@ public class MongoDbService {
 
 	}
 
+	/**
+	 * 内嵌模型
+	 * 
+	 * @param mainModelClass
+	 * @param key
+	 * @param val
+	 * @param otherModels
+	 */
 	public <M, O> void embedModels(Class<M> mainModelClass, String key, Object val, List<O> otherModels) {
 		if (otherModels.size() == 0) {
 			return;
@@ -136,6 +178,16 @@ public class MongoDbService {
 		Page mp = new Page(pageNumber, pageSize, total);
 		mp.setOnes(models);
 		return mp;
+	}
+
+	public <M, O> void correlationDocuments(M mainModel, String key, Object val, List<O> otherModels) {
+
+		String collectionName = ModelNaming.getCollectionName(mainModel);
+		String otherDocumentName = ModelNaming.getCollectionName(otherModels.get(0));
+
+		// mongoDbDao.correlationDocuments(collectionName, key, val,
+		// otherDocumentName, otherKey, otherValues);
+
 	}
 
 }

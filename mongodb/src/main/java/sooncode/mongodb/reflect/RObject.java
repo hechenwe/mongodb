@@ -225,12 +225,6 @@ public class RObject<T> {
 		return map;
 	}
 
-	 
-
-	 
-
-	 
-
 	/**
 	 * 反射执行方法
 	 * 
@@ -241,25 +235,33 @@ public class RObject<T> {
 	 * @return 方法执行的返回值
 	 */
 
-	public T invoke(String methodName, Object... args) {
+	public Object invoke(String methodName, Object... args) {
+		Class<?>[] paraClasses = null;
+		if (args != null) {
+			paraClasses = new Class<?>[args.length];
+		}
+
 		try {
 			Method method = null;
 			for (Class<?> clazz = object.getClass(); clazz != Object.class; clazz = clazz.getSuperclass()) {
 				try {
-					method = clazz.getDeclaredMethod(methodName, new Object().getClass());
+					method = clazz.getDeclaredMethod(methodName, paraClasses);
 				} catch (Exception e) {
 				}
 			}
-			@SuppressWarnings("unchecked")
-			T t = (T) method.invoke(object, args);
-			return t;
+			Object obj = null;
+			if (method != null) {
+				obj = method.invoke(object, args);
+			}
+			return obj;
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
 
-	public  Method getDeclaredMethod( String methodName) {
+	public Method getDeclaredMethod(String methodName) {
 		Method method = null;
 		for (Class<?> clazz = this.object.getClass(); clazz != Object.class; clazz = clazz.getSuperclass()) {
 			try {
@@ -270,17 +272,18 @@ public class RObject<T> {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * 实体转换
+	 * 
 	 * @param oldObj
 	 * @param newObjClass
 	 * @return
 	 */
-	public static <N,O>  N to(O oldObj, Class<N> newObjClass) {
-        if(oldObj==null || newObjClass==null){
-        	return null;
-        }
+	public static <N, O> N to(O oldObj, Class<N> newObjClass) {
+		if (oldObj == null || newObjClass == null) {
+			return null;
+		}
 		RObject<O> rOldObj = new RObject<>(oldObj);
 		RObject<N> rNewObj = new RObject<>(newObjClass);
 
@@ -307,25 +310,25 @@ public class RObject<T> {
 	 *            新对象的Class
 	 * @return 新对象集
 	 */
-	public static <N,O> List<N> tos(List<O> oldObjes, Class<N> newObjClass) {
+	public static <N, O> List<N> tos(List<O> oldObjes, Class<N> newObjClass) {
 		List<N> list = new ArrayList<N>();
-		  if(oldObjes==null || oldObjes.size()==0 || newObjClass==null){
-	        	return new ArrayList<>();
-	        }
+		if (oldObjes == null || oldObjes.size() == 0 || newObjClass == null) {
+			return new ArrayList<>();
+		}
 		for (O obj : oldObjes) {
-			 N newObje = to(obj, newObjClass);
+			N newObje = to(obj, newObjClass);
 			list.add(newObje);
 		}
 		return list;
 	}
-	
-	public void forEach ( Traversal<String, Object> traversal){
-		
-		Map<String, Object>  map =  getFiledAndValue()  ;
-		for(Entry<String, Object>  en : map.entrySet()){
-			traversal.each(en.getKey(),en.getValue());
+
+	public void forEach(Traversal<String, Object> traversal) {
+
+		Map<String, Object> map = getFiledAndValue();
+		for (Entry<String, Object> en : map.entrySet()) {
+			traversal.each(en.getKey(), en.getValue());
 		}
-		 
+
 	}
 
 }

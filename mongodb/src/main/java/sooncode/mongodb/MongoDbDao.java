@@ -3,8 +3,10 @@ package sooncode.mongodb;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import com.mongodb.BasicDBObject;
@@ -28,6 +30,8 @@ public class MongoDbDao {
 		this.mongoClientManager = mongoClientManager;
 	}
 
+	public static final String DOCUMENT_NAME_KEY = "DOCUMENT_NAME";
+
 	/**
 	 * 创建集合
 	 * 
@@ -47,12 +51,13 @@ public class MongoDbDao {
 
 	}
 
-	public void saveDocuments(String collectionName, List<Document> documents) {
+	public void saveDocuments(List<Document> documents) {
 
 		this.mongoClientManager.mongoDatabaseCallBack(new MongoDatabaseUse<String>() {
 
 			@Override
 			public String use(MongoDatabase mongoDatabase) {
+				String collectionName = getDocumentName(documents);
 				MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
 				if (collection == null) {
 					createCollection(collectionName);
@@ -65,12 +70,13 @@ public class MongoDbDao {
 
 	}
 
-	public void saveDocument(String collectionName, Document document) {
+	public void saveDocument(Document document) {
 
 		this.mongoClientManager.mongoDatabaseCallBack(new MongoDatabaseUse<String>() {
 
 			@Override
 			public String use(MongoDatabase mongoDatabase) {
+				String collectionName = getDocumentName(document);
 				MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
 				if (collection == null) {
 					createCollection(collectionName);
@@ -81,6 +87,21 @@ public class MongoDbDao {
 			}
 		});
 
+	}
+
+	private String getDocumentName(Document document) {
+		String documentName = document.getString(DOCUMENT_NAME_KEY);
+		document.remove(DOCUMENT_NAME_KEY);
+		return documentName;
+	}
+
+	private String getDocumentName(List<Document> documents) {
+		String documentName = new String();
+		for (Document doc : documents) {
+			documentName = doc.getString(DOCUMENT_NAME_KEY);
+			doc.remove(DOCUMENT_NAME_KEY);
+		}
+		return documentName;
 	}
 
 	/**
@@ -116,35 +137,17 @@ public class MongoDbDao {
 				BasicDBObject queryObject = new BasicDBObject().append("id", new BasicDBObject(QueryOperators.IN, otherValues.toArray()));
 
 				MongoCollection<Document> otherCollection = mongoDatabase.getCollection(otherDocumentName);
-				FindIterable<Document> otherFI =  otherCollection.find(queryObject);
-				
+				FindIterable<Document> otherFI = otherCollection.find(queryObject);
+
 				List<ObjectId> ids = new ArrayList<>();
 				for (Document d : otherFI) {
 					ObjectId objId = d.getObjectId("_id");
 					ids.add(objId);
 				}
-				
+
 				doc.append(otherDocumentName, ids);
 				mongoCollection.insertOne(doc);
-				
-				return null;
-			}
 
-		});
-	}
-
-	private void embed(String collectionName, String key, Object val, String otherDocumentName, Object otherDocuments) {
-		this.mongoClientManager.mongoDatabaseCallBack(new MongoDatabaseUse<String>() {
-
-			@Override
-			public String use(MongoDatabase mongoDatabase) {
-				BasicDBObject mainBasicDBObject = new BasicDBObject();
-				mainBasicDBObject.append(key, val);
-				MongoCollection<Document> mongoCollection = mongoDatabase.getCollection(collectionName);
-				FindIterable<Document> FindIterable = mongoCollection.find(mainBasicDBObject);
-				Document doc = FindIterable.first();
-				doc.append(otherDocumentName, otherDocuments);
-				updateDocument(collectionName, key, val, doc);
 				return null;
 			}
 
@@ -174,6 +177,31 @@ public class MongoDbDao {
 				Document d = fi.first();
 				Document other = (Document) d.get(otherDocumentName);
 				return other;
+			}
+
+		});
+
+	}
+
+	/**
+	 * 获取文档
+	 * 
+	 * @param collectionName
+	 * @param objectId
+	 * @return
+	 */
+	public Document getDocument(String collectionName, ObjectId objectId) {
+
+		return this.mongoClientManager.mongoDatabaseCallBack(new MongoDatabaseUse<Document>() {
+
+			@Override
+			public Document use(MongoDatabase mongoDatabase) {
+				MongoCollection<Document> mainCollection = mongoDatabase.getCollection(collectionName);
+				BasicDBObject mainBasicDBObject = new BasicDBObject();
+				mainBasicDBObject.append("_id", objectId);
+				FindIterable<Document> fi = mainCollection.find(mainBasicDBObject);
+				Document d = fi.first();
+				return d;
 			}
 
 		});
@@ -219,48 +247,45 @@ public class MongoDbDao {
 
 	}
 
-	public UpdateResult updateDocument(String collectionName, String key, Object value, Document document) {
-
+	public UpdateResult updateDocument(Document document) {
 		return this.mongoClientManager.mongoDatabaseCallBack(new MongoDatabaseUse<UpdateResult>() {
+			@Override
+			public UpdateResult use(MongoDatabase mongoDatabase) {
+				String collectionName = getDocumentName(document);
+				MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
+				return collection.updateMany(Filters.eq("_id", document.get("_id")), new Document("$set", document));
+			}
+		});
 
+	}
+	
+	/** 
+	 * 批量更新
+	 * @param document
+	 * @return
+	 */
+	public UpdateResult updateDocuments(String collectionName , String key ,Object value ,List<Document> documents) {
+		return this.mongoClientManager.mongoDatabaseCallBack(new MongoDatabaseUse<UpdateResult>() {
 			@Override
 			public UpdateResult use(MongoDatabase mongoDatabase) {
 				MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
-				return collection.updateMany(Filters.eq(key, value), new Document("$set", document));
+				return collection.updateMany(Filters.eq(key, value), new Document("$set", documents));
 			}
 		});
-
+		
 	}
 
-	public void updateDocuments(String collectionName, String key, Object value, List<Document> documents) {
-
-		this.mongoClientManager.mongoDatabaseCallBack(new MongoDatabaseUse<String>() {
-
-			@Override
-			public String use(MongoDatabase mongoDatabase) {
-				MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
-				for (Document doc : documents) {
-					collection.updateMany(Filters.eq(key, value), new Document("$set", doc));
-				}
-				return null;
-			}
-		});
+	
+	
+	
+	
+	public void updateDocuments( List<Document> documents) {
+		 for (Document document : documents) {
+			 updateDocument(document);
+		}
 
 	}
-
-	public DeleteResult deleteDocuments(String collectionName, String key, Object value) {
-
-		return this.mongoClientManager.mongoDatabaseCallBack(new MongoDatabaseUse<DeleteResult>() {
-
-			@Override
-			public DeleteResult use(MongoDatabase mongoDatabase) {
-				MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
-				DeleteResult deleteResult = collection.deleteMany(Filters.eq(key, value));
-				return deleteResult;
-			}
-		});
-
-	}
+ 
 
 	public DeleteResult deleteDocument(String collectionName, String key, Object value) {
 
@@ -274,6 +299,19 @@ public class MongoDbDao {
 			}
 		});
 
+	}
+	public DeleteResult deleteDocuments(String collectionName, String key, Object value) {
+		
+		return this.mongoClientManager.mongoDatabaseCallBack(new MongoDatabaseUse<DeleteResult>() {
+			
+			@Override
+			public DeleteResult use(MongoDatabase mongoDatabase) {
+				MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
+				DeleteResult deleteResult = collection.deleteMany(Filters.eq(key, value));
+				return deleteResult;
+			}
+		});
+		
 	}
 
 	public List<Document> getDocuments(String collectionName, BasicDBObject basicDBObject, int pageNumber, int pageSize) {
@@ -306,6 +344,24 @@ public class MongoDbDao {
 				MongoCollection<Document> mongoCollection = mongoDatabase.getCollection(collectionName);
 				return mongoCollection.count();
 			}
+		});
+	}
+
+	private void embed(String collectionName, String key, Object val, String otherDocumentName, Object otherDocuments) {
+		this.mongoClientManager.mongoDatabaseCallBack(new MongoDatabaseUse<String>() {
+
+			@Override
+			public String use(MongoDatabase mongoDatabase) {
+				BasicDBObject mainBasicDBObject = new BasicDBObject();
+				mainBasicDBObject.append(key, val);
+				MongoCollection<Document> mongoCollection = mongoDatabase.getCollection(collectionName);
+				FindIterable<Document> FindIterable = mongoCollection.find(mainBasicDBObject);
+				Document doc = FindIterable.first();
+				doc.append(otherDocumentName, otherDocuments);
+				updateDocument(doc);
+				return null;
+			}
+
 		});
 	}
 

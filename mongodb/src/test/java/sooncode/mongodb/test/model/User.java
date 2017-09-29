@@ -2,8 +2,12 @@ package sooncode.mongodb.test.model;
 
 import java.util.Date;
 
+import org.bson.types.ObjectId;
+
 public class User {
-	private Integer id;
+	
+	
+	private ObjectId _id;
 
 	private String username;
 
@@ -15,13 +19,7 @@ public class User {
 
 	private Date birthDay;
 
-	public Integer getId() {
-		return id;
-	}
-
-	public void setId(Integer id) {
-		this.id = id;
-	}
+	 
 
 	public String getUsername() {
 		return username;
@@ -63,9 +61,19 @@ public class User {
 		this.birthDay = birthDay;
 	}
 
+	public ObjectId get_id() {
+		return _id;
+	}
+
+	public void set_id(ObjectId _id) {
+		this._id = _id;
+	}
+
 	@Override
 	public String toString() {
-		return "User [id=" + id + ", username=" + username + ", pwd=" + pwd + ", score=" + score + ", sex=" + sex + ", birthDay=" + birthDay + "]";
+		return "User [_id=" + _id + ", username=" + username + ", pwd=" + pwd + ", score=" + score + ", sex=" + sex + ", birthDay=" + birthDay + "]";
 	}
+
+	 
 
 }
